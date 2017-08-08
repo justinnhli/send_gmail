@@ -94,13 +94,13 @@ def send_message(service, user_id, message):
         print('An error occurred: {}'.format(error))
 
 
-def send_email(to, subject, message_text, html=True):
+def send_email(to, subject, body, html=True):
     """Send an email.
 
     Args:
         to: Email address of the receiver.
         subject: The subject of the email message.
-        message_text: The text of the email message.
+        body: The text of the email message.
         html: If True, treat message as HTML instead of plain text. Defaults to True.
 
     Returns:
@@ -108,7 +108,7 @@ def send_email(to, subject, message_text, html=True):
     """
     service = get_service()
     sender = service.users().getProfile(userId='me').execute()['emailAddress']
-    message = create_message(sender=sender, to=to, subject=subject, message_text=message_text, html=html)
+    message = create_message(sender=sender, to=to, subject=subject, message_text=body, html=html)
     return send_message(service, 'me', message)
 
 
@@ -124,7 +124,7 @@ def main():
     send_email(
         to=args.to,
         subject=args.subject,
-        message_text=args.body,
+        body=args.body,
         html=args.html,
     )
 
