@@ -11,7 +11,7 @@ from oauth2client.file import Storage
 
 # If modifying these scopes, delete your previously saved credentials
 CREDENTIAL_PATH = join_path(realpath(expanduser(dirname(__file__))), 'stored-credentials.json')
-CLIENT_SECRET_FILE = 'client_secret.json'
+CLIENT_SECRET_FILE = join_path(realpath(expanduser(dirname(__file__))), 'client_secret.json')
 
 #SCOPES = 'https://mail.google.com/'
 SCOPES = [
@@ -35,7 +35,7 @@ def get_credentials():
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
         flow.user_agent = APPLICATION_NAME
-        credentials = tools.run(flow, store)
+        credentials = tools.run_flow(flow, store)
         print('Storing credentials to ' + CREDENTIAL_PATH)
     return credentials
 
