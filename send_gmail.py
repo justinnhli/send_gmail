@@ -5,7 +5,9 @@ from email.mime.text import MIMEText
 from os.path import join as join_path, realpath, expanduser, dirname
 
 from apiclient import discovery, errors
+from CommonMark import Parser as CommonMarkParser, HtmlRenderer
 from httplib2 import Http
+from jinja2 import Environment as JinjaEnvironment
 from oauth2client import client, tools
 from oauth2client.file import Storage
 
@@ -109,6 +111,23 @@ def send_email(to, subject, body, html=True):
     sender = service.users().getProfile(userId='me').execute()['emailAddress']
     message = create_message(sender=sender, to=to, subject=subject, message_text=body, html=html)
     return send_message(service, 'me', message)
+
+
+def markdown_render(s):
+    return HtmlRenderer().render(CommonMarkParser().parse(s))
+
+
+def jinja_render(template, context):
+    """Render a Jinja template.
+
+    Arguments:
+        template (str): The Jinja template string.
+        context ({str: *}): A dictionary of variables for Jinja.
+
+    Returns:
+        str: The rendered string.
+    """
+    return JinjaEnvironment().from_string(template).render(**context)
 
 
 def main():
