@@ -53,11 +53,10 @@ def get_service():
     return discovery.build('gmail', 'v1', http=http)
 
 
-def create_message(sender, to, subject, message_text, html=True):
+def create_message(to, subject, message_text, html=True):
     """Create a message for an email, using the low-level API
 
     Arguments:
-        sender (str): Email address of the sender.
         to (str): Email address of the receiver.
         subject (str): The subject of the email message.
         message_text (str): The text of the email message.
@@ -108,8 +107,7 @@ def send_email(to, subject, body, html=True):
         Sent Message.
     """
     service = get_service()
-    sender = service.users().getProfile(userId='me').execute()['emailAddress']
-    message = create_message(sender=sender, to=to, subject=subject, message_text=body, html=html)
+    message = create_message(to=to, subject=subject, message_text=body, html=html)
     return send_message(service, 'me', message)
 
 
