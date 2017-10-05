@@ -113,8 +113,16 @@ def send_email(to, subject, body, html=True):
     return send_message(service, 'me', message)
 
 
-def markdown_render(s):
-    return HtmlRenderer().render(CommonMarkParser().parse(s))
+def markdown_render(md):
+    """Convert Markdown to HTML.
+
+    Arguments:
+        md (str): The Markdown document.
+
+    Returns:
+        str: The rendered HTML.
+    """
+    return HtmlRenderer().render(CommonMarkParser().parse(md))
 
 
 def jinja_render(template, context):
