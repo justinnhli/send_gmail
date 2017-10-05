@@ -68,7 +68,6 @@ def create_message(sender, to, subject, message_text, html=True):
         message = MIMEText(message_text, 'html')
     else:
         message = MIMEText(message_text)
-    message['from'] = sender
     message['to'] = to
     message['subject'] = subject
     return {'raw': urlsafe_b64encode(message.as_string().encode()).decode()}
