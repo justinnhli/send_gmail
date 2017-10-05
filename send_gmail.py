@@ -11,14 +11,14 @@ from jinja2 import Environment as JinjaEnvironment
 from oauth2client import client, tools
 from oauth2client.file import Storage
 
-# If modifying these scopes, delete your previously saved credentials
-CREDENTIAL_PATH = join_path(realpath(expanduser(dirname(__file__))), 'stored-credentials.json')
-CLIENT_SECRET_FILE = join_path(realpath(expanduser(dirname(__file__))), 'client_secret.json')
+REAL_PATH = realpath(expanduser(dirname(__file__)))
+CREDENTIAL_PATH = join_path(REAL_PATH, 'stored-credentials.json')
+CLIENT_SECRET_FILE = join_path(REAL_PATH, 'client_secret.json')
 
-#SCOPES = 'https://mail.google.com/'
+# If modifying these scopes, delete your previously saved credentials
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.modify',
-    'https://www.googleapis.com/auth/gmail.compose'
+    'https://www.googleapis.com/auth/gmail.compose',
 ]
 APPLICATION_NAME = 'Python Gmail Sender'
 
@@ -56,15 +56,15 @@ def get_service():
 def create_message(sender, to, subject, message_text, html=True):
     """Create a message for an email, using the low-level API
 
-    Args:
-        sender: Email address of the sender.
-        to: Email address of the receiver.
-        subject: The subject of the email message.
-        message_text: The text of the email message.
-        html: If True, treat message as HTML instead of plain text. Defaults to True.
+    Arguments:
+        sender (str): Email address of the sender.
+        to (str): Email address of the receiver.
+        subject (str): The subject of the email message.
+        message_text (str): The text of the email message.
+        html (bool): If True, treat message as HTML instead of plain text. Defaults to True.
 
     Returns:
-        An object containing a base64url encoded email object.
+        dict: A base64url encoded email JSON "object".
     """
     if html:
         message = MIMEText(message_text, 'html')
@@ -78,11 +78,11 @@ def create_message(sender, to, subject, message_text, html=True):
 def send_message(service, user_id, message):
     """Send an email message, using the low-level API
 
-    Args:
-        service: Authorized Gmail API service instance.
-        user_id: User's email address. The special value "me"
-        can be used to indicate the authenticated user.
-        message: Message to be sent.
+    Arguments:
+        service (Service): Authorized Gmail API service instance.
+        user_id (str): User's email address. The special value "me"
+            can be used to indicate the authenticated user.
+            message: Message to be sent.
 
     Returns:
         Sent Message.
@@ -98,11 +98,11 @@ def send_message(service, user_id, message):
 def send_email(to, subject, body, html=True):
     """Send an email.
 
-    Args:
-        to: Email address of the receiver.
-        subject: The subject of the email message.
-        body: The text of the email message.
-        html: If True, treat message as HTML instead of plain text. Defaults to True.
+    Arguments:
+        to (str): Email address of the receiver.
+        subject (str): The subject of the email message.
+        body (str): The text of the email message.
+        html (bool): If True, treat message as HTML instead of plain text. Defaults to True.
 
     Returns:
         Sent Message.
