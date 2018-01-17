@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 from base64 import urlsafe_b64encode
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from os.path import join as join_path, realpath, expanduser, dirname
+from os.path import join as join_path, basename, realpath, expanduser, dirname
 
 from apiclient import discovery, errors
 from CommonMark import Parser as CommonMarkParser, HtmlRenderer
@@ -53,7 +55,7 @@ def get_service():
     return discovery.build('gmail', 'v1', http=http)
 
 
-def create_message(to, subject, message_text, html=True):
+def create_message(to, subject, message_text, html=True, attachments=None):
     """Create a message for an email, using the low-level API
 
     Arguments:
@@ -61,16 +63,33 @@ def create_message(to, subject, message_text, html=True):
         subject (str): The subject of the email message.
         message_text (str): The text of the email message.
         html (bool): If True, treat message as HTML instead of plain text. Defaults to True.
+        attachments ([str]): A list of filepaths to attach to the email. Defaults to [].
 
     Returns:
         dict: A base64url encoded email JSON "object".
     """
-    if html:
-        message = MIMEText(message_text, 'html')
-    else:
-        message = MIMEText(message_text)
+    if attachments is None:
+        attachments = []
+
+    # create the initial message
+    message = MIMEMultipart()
     message['to'] = to
     message['subject'] = subject
+
+    # add the email body text
+    if html:
+        message.attach(MIMEText(message_text, 'html'))
+    else:
+        message.attach(MIMEText(message_text))
+
+    # add each file attachment
+    for filepath in attachments:
+        with open(realpath(expanduser(filepath)), 'rb') as fd:
+            attachment = MIMEApplication(fd.read(), Name=basename(filepath))
+        attachment['Content-Disposition'] = 'attachment; filename="{}"'.format(basename(filepath))
+        message.attach(attachment)
+
+    # correctly encode and decode the message
     return {'raw': urlsafe_b64encode(message.as_string().encode()).decode()}
 
 
@@ -94,7 +113,7 @@ def send_message(service, user_id, message):
         print('An error occurred: {}'.format(error))
 
 
-def send_email(to, subject, body, html=True):
+def send_email(to, subject, body, html=True, attachments=None):
     """Send an email.
 
     Arguments:
@@ -102,12 +121,15 @@ def send_email(to, subject, body, html=True):
         subject (str): The subject of the email message.
         body (str): The text of the email message.
         html (bool): If True, treat message as HTML instead of plain text. Defaults to True.
+        attachments ([str]): A list of filepaths to attach to the email. Defaults to [].
 
     Returns:
         Sent Message.
     """
+    if attachments is None:
+        attachments = []
     service = get_service()
-    message = create_message(to=to, subject=subject, message_text=body, html=html)
+    message = create_message(to=to, subject=subject, message_text=body, attachments=attachments, html=html)
     return send_message(service, 'me', message)
 
 
