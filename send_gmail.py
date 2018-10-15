@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Simple library to send emails through Gmail."""
 
+import json
 import webbrowser
 from base64 import urlsafe_b64encode
 from functools import lru_cache
@@ -24,6 +25,11 @@ SCOPES = [
 ]
 
 
+def get_redirect_uri():
+    """Get redirect URI from client secret file."""
+    with open(CLIENT_SECRET_FILE) as fd:
+        return json.load(fd)['installed']['redirect_uris'][0]
+
 @lru_cache()
 def get_credentials():
     """Get Google credentials."""
@@ -31,7 +37,7 @@ def get_credentials():
     flow = Flow.from_client_secrets_file(
         CLIENT_SECRET_FILE,
         scopes=SCOPES,
-        redirect_uri='urn:ietf:wg:oauth:2.0:oob', # FIXME this should be read from client secret as well
+        redirect_uri=get_redirect_uri(),
     )
 
     # Tell the user to go to the authorization URL.
