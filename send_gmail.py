@@ -7,7 +7,7 @@ from email.mime.text import MIMEText
 from os.path import join as join_path, basename, realpath, expanduser, dirname
 
 from apiclient import discovery, errors
-from CommonMark import Parser as CommonMarkParser, HtmlRenderer
+from commonmark import Parser as CommonMarkParser, HtmlRenderer
 from httplib2 import Http
 from jinja2 import Environment as JinjaEnvironment
 from oauth2client import client, tools
