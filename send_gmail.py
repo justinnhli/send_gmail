@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Simple library to send emails through Gmail."""
 
 import webbrowser
 from base64 import urlsafe_b64encode
@@ -25,6 +26,7 @@ SCOPES = [
 
 @lru_cache()
 def get_credentials():
+    """Get Google credentials."""
     # Create the flow using the client secrets file from the Google API Console.
     flow = Flow.from_client_secrets_file(
         CLIENT_SECRET_FILE,
@@ -94,7 +96,7 @@ def create_message(address, subject, message_text, html=True, attachments=None):
 
 
 def send_message(service, user_id, message):
-    """Send an email message, using the low-level API
+    """Send an email message, using the low-level API.
 
     Arguments:
         service (Service): Authorized Gmail API service instance.
