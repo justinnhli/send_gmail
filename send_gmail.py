@@ -33,20 +33,16 @@ def get_redirect_uri():
 @lru_cache()
 def get_credentials():
     """Get Google credentials."""
-    # Create the flow using the client secrets file from the Google API Console.
+    # create the flow using the client secrets file
+    # https://console.developers.google.com/
     flow = Flow.from_client_secrets_file(
         CLIENT_SECRET_FILE,
         scopes=SCOPES,
         redirect_uri=get_redirect_uri(),
     )
-
-    # Tell the user to go to the authorization URL.
+    # open authorization URL to copy the authorization code
     auth_url, _ = flow.authorization_url(prompt='consent')
-
     webbrowser.open(auth_url)
-
-    # The user will get an authorization code. This code is used to get the
-    # access token.
     code = input('Enter the authorization code: ')
     flow.fetch_token(code=code)
 
