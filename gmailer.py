@@ -181,7 +181,7 @@ def main():
     arg_parser.add_argument('--html', action='store_true', help='treat body as HTML (default False)')
     args = arg_parser.parse_args()
     send_email(
-        address=args.to,
+        address=args.addresses,
         subject=args.subject,
         body=args.body,
         html=args.html,
