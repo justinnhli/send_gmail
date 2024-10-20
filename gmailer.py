@@ -48,14 +48,13 @@ def get_credentials():
     return creds
 
 
-def get_service():
+def build_gmail_service():
     """Build a Gmail API service.
 
     Returns:
         Resource: The Resource for interacting with a Google API.
     """
-    credentials = get_credentials()
-    return discovery.build('gmail', 'v1', credentials=credentials)
+    return build('gmail', 'v1', credentials=get_credentials())
 
 
 def create_message(address, subject, message_text, html=True, attachments=None):
@@ -89,7 +88,7 @@ def create_message(address, subject, message_text, html=True, attachments=None):
     for attachment_path in attachments:
         with attachment_path.open('rb') as fd:
             attachment = MIMEApplication(fd.read(), Name=attachment_path.name)
-        attachment['Content-Disposition'] = 'attachment; filename="{}"'.format(attachment_path.name)
+        attachment['Content-Disposition'] = f'attachment; filename="{attachment_path.name}"'
         message.attach(attachment)
 
     # correctly encode and decode the message
@@ -110,10 +109,11 @@ def send_message(service, user_id, message):
     """
     try:
         message = service.users().messages().send(userId=user_id, body=message).execute()
-        print('Message sent; id={}'.format(message['id']))
+        print(f'Message sent; id={message["id"]}')
         return message
     except HttpError as error:
-        print('An error occurred: {}'.format(error))
+        print(f'An error occurred: {error}')
+    return None
 
 
 def send_email(address, subject, body, html=True, attachments=None):
@@ -134,9 +134,15 @@ def send_email(address, subject, body, html=True, attachments=None):
     assert hasattr(address, '__iter__')
     if attachments is None:
         attachments = []
-    service = get_service()
+    service = build_gmail_service()
     address = ', '.join(address)
-    message = create_message(address=address, subject=subject, message_text=body, attachments=attachments, html=html)
+    message = create_message(
+        address=address,
+        subject=subject,
+        message_text=body,
+        attachments=attachments,
+        html=html,
+    )
     return send_message(service, 'me', message)
 
 
