@@ -1,4 +1,4 @@
-# `send_gmail`
+# `gmailer`
 
 A simple script/library to send emails using the Gmail API. To use:
 
@@ -9,7 +9,7 @@ A simple script/library to send emails using the Gmail API. To use:
 3. Test the script by running:
 
 	```
-	send_gmail.py <YOUR_EMAIL> 'Python Gmail Send Test' 'It works!'
+	gmailer.py <YOUR_EMAIL> 'Python Gmail Send Test' 'It works!'
 	```
 	
 	You will be asked to authenticate this app. If the script prints `Message sent` and you receive an email from yourself, everything works.
