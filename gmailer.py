@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """Simple library to send emails through Gmail."""
 
+# pylint: disable = import-error, line-too-long
+
 from argparse import ArgumentParser
 from base64 import urlsafe_b64encode
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
+from typing import Any, Union, Sequence
 
 from commonmark import Parser as CommonMarkParser, HtmlRenderer
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
+from googleapiclient.discovery import build, Resource
 from googleapiclient.errors import HttpError
 from jinja2 import Environment as JinjaEnvironment
 
@@ -28,6 +31,7 @@ SCOPES = [
 
 
 def get_credentials():
+    # type: () -> Credentials
     """Get Google credentials."""
     creds = None
     # read the credentials from the token file, if it exists
@@ -50,6 +54,7 @@ def get_credentials():
 
 
 def build_gmail_service():
+    # type: () -> Resource
     """Build a Gmail API service.
 
     Returns:
@@ -58,11 +63,12 @@ def build_gmail_service():
     return build('gmail', 'v1', credentials=get_credentials())
 
 
-def create_message(address, subject, message_text, html=True, attachments=None):
+def create_message(addresses, subject, message_text, html=True, attachments=None):
+    # type: (list[str], str, str, bool, list[Path]) -> MIMEMultipart
     """Create a message for an email, using the low-level API.
 
     Arguments:
-        address (str): Email address(es) of the receiver.
+        addresses (str): Email address(es) of the receiver.
         subject (str): The subject of the email message.
         message_text (str): The text of the email message.
         html (bool): If True, treat message as HTML instead of plain text. Defaults to True.
@@ -73,34 +79,31 @@ def create_message(address, subject, message_text, html=True, attachments=None):
     """
     if attachments is None:
         attachments = []
-
     # create the initial message
     message = MIMEMultipart()
-    message['to'] = address
+    message['to'] = ','.join(addresses)
     message['subject'] = subject
-
     # add the email body text
     if html:
         message.attach(MIMEText(message_text, 'html'))
     else:
         message.attach(MIMEText(message_text))
-
     # add each file attachment
     for attachment_path in attachments:
         with attachment_path.open('rb') as fd:
             attachment = MIMEApplication(fd.read(), Name=attachment_path.name)
         attachment['Content-Disposition'] = f'attachment; filename="{attachment_path.name}"'
         message.attach(attachment)
-
     # correctly encode and decode the message
-    return {'raw': urlsafe_b64encode(message.as_string().encode()).decode()}
+    return message
 
 
 def send_message(service, user_id, message):
+    # type: (Resource, str, MIMEMultipart) -> dict[str, Any]
     """Send an email message, using the low-level API.
 
     Arguments:
-        service (Service): Authorized Gmail API service instance.
+        service (Resource): Authorized Gmail API service instance.
         user_id (str): User's email address. The special value "me"
             can be used to indicate the authenticated user.
         message (str): Message to be sent.
@@ -109,15 +112,21 @@ def send_message(service, user_id, message):
         dict: The sent message as a JSON-like object.
     """
     try:
-        message = service.users().messages().send(userId=user_id, body=message).execute()
-        print(f'Message sent; id={message["id"]}')
-        return message
+        sent_message = service.users().messages().send(
+            userId=user_id,
+            body={
+                'raw': urlsafe_b64encode(message.as_string().encode()).decode(),
+            },
+        ).execute()
+        print(f'Message sent; id={sent_message["id"]}')
+        return sent_message
     except HttpError as error:
         print(f'An error occurred: {error}')
     return None
 
 
 def send_email(address, subject, body, html=True, attachments=None):
+    # type: (Union[Sequence[str], str], str, str, bool, list[Path]) -> dict[str, Any]
     """Send an email.
 
     Arguments:
@@ -131,23 +140,26 @@ def send_email(address, subject, body, html=True, attachments=None):
         Message: The sent message.
     """
     if isinstance(address, str):
-        address = [address]
-    assert hasattr(address, '__iter__')
+        addresses = [address]
+    else:
+        addresses = list(address)
     if attachments is None:
         attachments = []
-    service = build_gmail_service()
-    address = ', '.join(address)
-    message = create_message(
-        address=address,
-        subject=subject,
-        message_text=body,
-        attachments=attachments,
-        html=html,
+    return send_message(
+        build_gmail_service(),
+        'me',
+        create_message(
+            addresses=addresses,
+            subject=subject,
+            message_text=body,
+            attachments=attachments,
+            html=html,
+        ),
     )
-    return send_message(service, 'me', message)
 
 
 def markdown_render(markdown):
+    # type: (str) -> str
     """Convert Markdown to HTML.
 
     Arguments:
@@ -160,6 +172,7 @@ def markdown_render(markdown):
 
 
 def jinja_render(template, context):
+    # type: (str, dict[str, Any]) -> str
     """Render a Jinja template.
 
     Arguments:
@@ -173,6 +186,7 @@ def jinja_render(template, context):
 
 
 def main():
+    # type: () -> None
     """Send an email from the command line."""
     arg_parser = ArgumentParser()
     arg_parser.add_argument('addresses', metavar='TO', help='(Comma-separated) email address(es) of the recipient(s)')
