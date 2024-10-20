@@ -3,11 +3,12 @@
 
 import json
 import webbrowser
+from argparse import ArgumentParser
 from base64 import urlsafe_b64encode
-from functools import lru_cache
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from functools import lru_cache
 from pathlib import Path
 
 from apiclient import discovery, errors
@@ -167,7 +168,6 @@ def jinja_render(template, context):
 
 def main():
     """Send an email from the command line."""
-    from argparse import ArgumentParser
     arg_parser = ArgumentParser()
     arg_parser.add_argument('addresses', metavar='TO', help='(Comma-separated) email address(es) of the recipient(s)')
     arg_parser.add_argument('subject', metavar='SUBJECT', help='Subject of the email')
