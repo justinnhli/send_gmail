@@ -8,15 +8,14 @@ from functools import lru_cache
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from os.path import join as join_path, basename, realpath, expanduser, dirname
+from pathlib import Path
 
 from apiclient import discovery, errors
 from commonmark import Parser as CommonMarkParser, HtmlRenderer
 from google_auth_oauthlib.flow import Flow
 from jinja2 import Environment as JinjaEnvironment
 
-REAL_PATH = realpath(expanduser(dirname(__file__)))
-CLIENT_SECRET_FILE = join_path(REAL_PATH, 'client_secret.json')
+CLIENT_SECRET_FILE = Path(__file__).parent / 'client_secret.json'
 
 # If modifying these scopes, delete your previously saved credentials
 SCOPES = [
@@ -67,7 +66,7 @@ def create_message(address, subject, message_text, html=True, attachments=None):
         subject (str): The subject of the email message.
         message_text (str): The text of the email message.
         html (bool): If True, treat message as HTML instead of plain text. Defaults to True.
-        attachments (List[str]): A list of filepaths to attach to the email. Defaults to [].
+        attachments (List[Path]): A list of filepaths to attach to the email. Defaults to [].
 
     Returns:
         dict: A base64url encoded email JSON "object".
@@ -87,10 +86,10 @@ def create_message(address, subject, message_text, html=True, attachments=None):
         message.attach(MIMEText(message_text))
 
     # add each file attachment
-    for filepath in attachments:
-        with open(realpath(expanduser(filepath)), 'rb') as fd:
-            attachment = MIMEApplication(fd.read(), Name=basename(filepath))
-        attachment['Content-Disposition'] = 'attachment; filename="{}"'.format(basename(filepath))
+    for attachment_path in attachments:
+        with attachment_path.open('rb') as fd:
+            attachment = MIMEApplication(fd.read(), Name=attachment_path.name)
+        attachment['Content-Disposition'] = 'attachment; filename="{}"'.format(attachment_path.name)
         message.attach(attachment)
 
     # correctly encode and decode the message
