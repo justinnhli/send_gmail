@@ -16,7 +16,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from jinja2 import Environment as JinjaEnvironment
 
-CLIENT_SECRET_FILE = Path(__file__).parent / 'client_secret.json'
+CLIENT_SECRET_PATH = Path('~/.secrets/gmail-client-secret.json').expanduser().resolve()
 TOKEN_PATH = Path(__file__).parent / 'token.json'
 
 # If modifying these scopes, delete your previously saved credentials
