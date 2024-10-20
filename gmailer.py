@@ -1,52 +1,51 @@
 #!/usr/bin/env python3
 """Simple library to send emails through Gmail."""
 
-import json
-import webbrowser
 from argparse import ArgumentParser
 from base64 import urlsafe_b64encode
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from functools import lru_cache
 from pathlib import Path
 
-from apiclient import discovery, errors
 from commonmark import Parser as CommonMarkParser, HtmlRenderer
-from google_auth_oauthlib.flow import Flow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from jinja2 import Environment as JinjaEnvironment
 
 CLIENT_SECRET_FILE = Path(__file__).parent / 'client_secret.json'
+TOKEN_PATH = Path(__file__).parent / 'token.json'
 
 # If modifying these scopes, delete your previously saved credentials
 SCOPES = [
-    'https://www.googleapis.com/auth/gmail.modify',
     'https://www.googleapis.com/auth/gmail.compose',
+    'https://www.googleapis.com/auth/gmail.modify',
 ]
 
 
-def get_redirect_uri():
-    """Get redirect URI from client secret file."""
-    with open(CLIENT_SECRET_FILE) as fd:
-        return json.load(fd)['installed']['redirect_uris'][0]
-
-@lru_cache()
 def get_credentials():
     """Get Google credentials."""
-    # create the flow using the client secrets file
-    # https://console.developers.google.com/
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRET_FILE,
-        scopes=SCOPES,
-        redirect_uri=get_redirect_uri(),
-    )
-    # open authorization URL to copy the authorization code
-    auth_url, _ = flow.authorization_url(prompt='consent')
-    webbrowser.open(auth_url)
-    code = input('Enter the authorization code: ')
-    flow.fetch_token(code=code)
-
-    return flow.credentials
+    creds = None
+    # read the credentials from the token file, if it exists
+    if TOKEN_PATH.exists():
+        creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
+    # ask the user to log in if there are no valid credentials
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(str(CLIENT_SECRET_PATH), SCOPES)
+            creds = flow.run_local_server(port=0)
+    # check credentials
+    if not creds and creds.valid:
+        raise ValueError('unable to establish credentials')
+    # save the valid credentials
+    with TOKEN_PATH.open('w') as fd:
+        fd.write(creds.to_json())
+    return creds
 
 
 def get_service():
@@ -113,7 +112,7 @@ def send_message(service, user_id, message):
         message = service.users().messages().send(userId=user_id, body=message).execute()
         print('Message sent; id={}'.format(message['id']))
         return message
-    except errors.HttpError as error:
+    except HttpError as error:
         print('An error occurred: {}'.format(error))
 
 
