@@ -19,7 +19,8 @@ from jinja2 import Environment as JinjaEnvironment
 CLIENT_SECRET_PATH = Path('~/.secrets/gmail-client-secret.json').expanduser().resolve()
 TOKEN_PATH = Path(__file__).parent / 'token.json'
 
-# If modifying these scopes, delete your previously saved credentials
+# if modifying these scopes, delete TOKEN_PATH
+# for all existing scopes, see https://developers.google.com/identity/protocols/oauth2/scopes
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.compose',
     'https://www.googleapis.com/auth/gmail.modify',
